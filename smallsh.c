@@ -1,9 +1,25 @@
 #include "smallsh.h"
 #include <sys/types.h>
 #include <string.h>
+#include <signal.h>
 
 char *prompt = "";
 
+void sig_handler(int signo,int SIGINT,int pid)
+{
+  
+    if (signo == SIGINT)
+    {
+      kill(pid, SIGTERM);
+      //signal(SIGINT, sig_handler);
+      printf("received SIGINT\n");
+      fflush(stdout);
+    }
+  
+  
+
+    
+}
 
 int procline(void) /* tratta una riga di input */
 {
@@ -129,8 +145,11 @@ void runcommand(char **cline,int where)	/* esegue un comando */
     
     /* la seguente istruzione non tiene conto della possibilita'
       di comandi in background  (where == BACKGROUND) */
-    if (!where == BACKGROUND)
+    if (!where == BACKGROUND){
+      signal(SIGINT, sig_handler);
       ret = wait(&exitstat);
+    }
+      
 
 
     if (ret == -1) perror("wait");
@@ -154,6 +173,7 @@ char* getUserNameAndWorkingDir()
   pStringtoRet = &stringToRet;
   return pStringtoRet;
 }
+
 
 int main()
 {
