@@ -2,23 +2,79 @@
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
 char *prompt = "";
+pid_t pid;
+struct sigaction sa;
+int exitstat, ret;
 
-void sig_handler(int signo,int SIGINT,int pid)
+
+void sig_handler(int signo)
 {
   
     if (signo == SIGINT)
     {
-      kill(pid, SIGTERM);
+      //kill(pid, SIGTERM);
       //signal(SIGINT, sig_handler);
-      printf("received SIGINT\n");
+      //printf("received SIGINT\n");
       fflush(stdout);
+      //kill(pid, SIGINT);
+      //return EXIT_FAILURE;
     }
-  
-  
-
     
+}
+char * removePid(int pid){
+  //controllo che la variabile contenga pid+,
+  if (strstr(getenv("BPID"), srtcat(convertIntToString(pid),",")) != NULL)
+  {
+    return strremove(getenv("BPID"), srtcat(convertIntToString(pid), ","));
+  }
+  //controllo che la variabile contenga pid (ultimo elemento o primo senza ulteriori)
+  if (strstr(getenv("BPID"), convertIntToString(pid)) != NULL){
+    return strremove(getenv("BPID"), convertIntToString(pid));
+  }
+  return;
+}
+char * insertPid(int pid)
+{
+  int size = strlen(getenv("BPID"));
+  if(size==0)
+    size=100;
+  char myenv[size] = getenv("BPID");
+  if (getNumberOfChar(myenv,",")>0){
+    myenv = strcat(myenv, ",");
+        setenv("BPID", )
+  }
+  //char myenv[100] = getenv("BPID");
+}
+
+int getNumberOfChar(char * str,char c){
+  int ret =0;
+  for (int i = 0; i<strlen(str);i++){
+    if (str[i] == c)
+      ret++;
+  }
+  return ret;
+}
+char *strremove(char *str, const char *sub)
+{
+  size_t len = strlen(sub);
+  if (len > 0)
+  {
+    char *p = str;
+    while ((p = strstr(p, sub)) != NULL)
+    {
+      memmove(p, p + len, strlen(p + len) + 1);
+    }
+  }
+  return str;
+}
+
+char * convertIntToString(int n){
+  char str[12];
+  sprintf(str, "%d", n);
+  return &str;
 }
 
 int procline(void) /* tratta una riga di input */
@@ -74,14 +130,14 @@ int procline(void) /* tratta una riga di input */
 
 void runcommand(char **cline,int where)	/* esegue un comando */
 {
+
   
-    pid_t pid;
-    int exitstat,ret;
-    
-    pid = fork();
-    if (pid == (pid_t) -1) {
-      perror("smallsh: fork fallita");
-      return;
+
+  pid = fork();
+  if (pid == (pid_t)-1)
+  {
+    perror("smallsh: fork fallita");
+    return;
     }
 
     if (pid == (pid_t) 0) { 	/* processo figlio */
@@ -102,7 +158,7 @@ void runcommand(char **cline,int where)	/* esegue un comando */
 
         if (p == 0)
         { /* processo figlio */
-          
+          setenv("BPID",convertIntToString(p),1);
           execvp(*cline, cline);
           exit(EXIT_SUCCESS);
         }else{
@@ -146,8 +202,19 @@ void runcommand(char **cline,int where)	/* esegue un comando */
     /* la seguente istruzione non tiene conto della possibilita'
       di comandi in background  (where == BACKGROUND) */
     if (!where == BACKGROUND){
-      signal(SIGINT, sig_handler);
+      struct sigaction signalAction;
+      signalAction.sa_handler = sig_handler;
+      sigemptyset(&signalAction.sa_mask);
+      signalAction.sa_flags = 0; // SA_RESTART;
+      sigaction(SIGINT, &signalAction, NULL);
+      //  if(signal(SIGINT, sig_handler)== SIGINT){
+      //     printf("my pid %d \n",pid);
+      //     //kill(pid,SIGINT);
+      //   }else{
+      //     printf("not  %d \n", signal(SIGINT, sig_handler));
+      //   }
       ret = wait(&exitstat);
+
     }
       
 
@@ -158,18 +225,13 @@ void runcommand(char **cline,int where)	/* esegue un comando */
 
 char* getUserNameAndWorkingDir()
 {
-  //char *buf;
   char stringToRet[100] = "%";
   char *pStringtoRet;
-  // buf = (char *)malloc(20 * sizeof(char));
-  // buf = getlogin();
   
-  //char *percentageString="%";
-
-  //strcat(stringToRet, buf);
   strcat(stringToRet, getenv("USER"));
   strcat(stringToRet, ":");
   strcat(stringToRet, getenv("HOME"));
+  strcat(stringToRet, ":");
   pStringtoRet = &stringToRet;
   return pStringtoRet;
 }
@@ -177,7 +239,8 @@ char* getUserNameAndWorkingDir()
 
 int main()
 {
-  prompt = getUserNameAndWorkingDir();
+  
+      prompt = getUserNameAndWorkingDir();
   while (userin(prompt) != EOF){
     //to fix prompt after first init
     prompt = getUserNameAndWorkingDir();
