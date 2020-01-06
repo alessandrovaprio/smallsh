@@ -20,7 +20,7 @@ char *convertIntToString(int n);
     {
       //kill(pid, SIGTERM);
       //signal(SIGINT, sig_handler);
-      //printf("received SIGINT\n");
+      printf("received SIGINT\n");
       fflush(stdout);
       //kill(pid, SIGINT);
       //return EXIT_FAILURE;
@@ -51,7 +51,7 @@ char *convertIntToString(int n);
     char *env = getenv("BPID");
     if (env != NULL)
     {
-      if (strlen(env > 0))
+      if (strlen(env) > 0)
       {
         size = strlen(getenv("BPID"));
       }
@@ -134,8 +134,8 @@ char *convertIntToString(int n);
       case ARG:
 		
         if (narg < MAXARG)
-	  narg++;
-	break;
+	        narg++;
+	        break;
 
       /* se fine riga o ';' o '&' esegue il comando ora contenuto in arg,
 	 mettendo NULL per segnalare la fine degli argomenti: serve a execvp */
@@ -166,14 +166,14 @@ char *convertIntToString(int n);
 
 void runcommand(char **cline,int where)	/* esegue un comando */
 {
-
+   int status;
   fflush(stdout);
   pid = fork();
   if (pid == (pid_t)-1)
   {
     perror("smallsh: fork fallita");
     return;
-    }
+  }
 
     if (pid == (pid_t) 0) { 	/* processo figlio */
 
@@ -197,12 +197,21 @@ void runcommand(char **cline,int where)	/* esegue un comando */
         { /* processo figlio */
           //setenv("BPID",convertIntToString(p),1);
           //insertPid(p);
-          execvp(*cline, cline);
-          exit(EXIT_SUCCESS);
+
+
+          // printf("background my pid %d  e p %d\n",pid,p);
+         if (execvp(*cline, cline) < 0) {     /* execute the command  */
+               printf("*** ERROR: exec failed\n");
+               exit(1);
+          }
         }else{
-          int status;
+          //int status;
           int endID = waitpid(p, &status, WNOHANG | WUNTRACED);
-          while(endID ==0){
+          //while (wait(&status) != p);
+          while(endID != p ){
+            printf("pid,p,endId: %d , %d , %d \n",pid,p,endID);
+          
+          // while(endID ==0){
             //printf("Child still running");
             endID = waitpid(p, &status, WNOHANG | WUNTRACED);
             if (endID == -1)
@@ -214,6 +223,7 @@ void runcommand(char **cline,int where)	/* esegue un comando */
             { /* child ended                 */
               if (WIFEXITED(status)){
                 printf("The command %s is terminated \n", *cline);
+
               }
               else if (WIFSIGNALED(status))
                 printf("Child ended because of an uncaught signal.n \n");
@@ -222,42 +232,91 @@ void runcommand(char **cline,int where)	/* esegue un comando */
               else
                 printf("Child");
               //removePid()
+
               fflush(stdout);
-              exit(EXIT_SUCCESS);
+              printf("before exit %d %d\n",pid,p);
+              exit(1);
+            }
+          }
+          
+          printf("out of while %d %d\n",pid,p);
+          
+        }
+        printf("out of while before exit %d %d\n",pid,p);
+        exit(1);
+          //perror(*cline);
+       
+      }else{
+       
+        if (execvp(*cline, cline) < 0) {     /* execute the command  */
+               printf("*** ERROR: exec failed\n");
+               exit(1);
+        }
+
+        
+       
+      }
+    }else{
+      // signal(SIGINT, sig_handler); 
+      // ret = wait(&exitstat);
+      
+      if (!where == BACKGROUND){
+        printf("foreground my pid %d \n",pid);
+
+
+        int endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
+        printf("pid,endId: %d , %d \n",pid,endID);
+          //while (wait(&status) != p);
+          while(endID != pid ){
+           //endID = endID == -1 ? -1 : waitpid(pid, &status, WNOHANG | WUNTRACED);
+           endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
+          
+          // while(endID ==0){
+            //printf("Child still running");
+           
+            if (endID == -1)
+            { /* error calling waitpid       */
+              perror("waitpid error");
+              exit(EXIT_FAILURE);
+            }
+            else if (endID == pid)
+            { /* child ended                 */
+              if (WIFEXITED(0)){
+                printf("The command %s is terminated \n");
+
+              }
+              else if (WIFSIGNALED(status))
+                printf("Child ended because of an uncaught signal.n \n");
+              else if (WIFSTOPPED(status))
+                printf("Child process has stopped.n \n");
+              //removePid()
+
+              fflush(stdout);
+              //exit(1);
             }
           }
           
           
-          
-        }
-          //perror(*cline);
-       
-      }else{
-        execvp(*cline,cline);
-        perror(*cline);
-        exit(1);
+        
+        // struct sigaction signalAction;
+        // signalAction.sa_handler = sig_handler;
+        // sigemptyset(&signalAction.sa_mask);
+        // signalAction.sa_flags = 0; // SA_RESTART;
+        // sigaction(SIGINT, &signalAction, NULL);
+
+        //  if(signal(SIGINT, sig_handler)== SIGINT){
+        //     printf("my pid %d \n",pid);
+        //     //kill(pid,SIGINT);
+        //   }else{
+        //     printf("not  %d \n", signal(SIGINT, sig_handler));
+        //   }
+
+        //exit(1);
       }
-    }
-
-    /* processo padre: avendo messo exec e exit non serve "else" */
-    
-    /* la seguente istruzione non tiene conto della possibilita'
-      di comandi in background  (where == BACKGROUND) */
-    if (!where == BACKGROUND){
-      struct sigaction signalAction;
-      signalAction.sa_handler = sig_handler;
-      sigemptyset(&signalAction.sa_mask);
-      signalAction.sa_flags = 0; // SA_RESTART;
-      sigaction(SIGINT, &signalAction, NULL);
-      //  if(signal(SIGINT, sig_handler)== SIGINT){
-      //     printf("my pid %d \n",pid);
-      //     //kill(pid,SIGINT);
-      //   }else{
-      //     printf("not  %d \n", signal(SIGINT, sig_handler));
-      //   }
-      ret = wait(&exitstat);
+        signal(SIGINT, SIG_DFL);
 
     }
+
       
 
 
