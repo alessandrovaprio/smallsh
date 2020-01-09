@@ -205,45 +205,54 @@ void runcommand(char **cline,int where)	/* esegue un comando */
                exit(1);
           }
         }else{
-          //int status;
-          int endID = waitpid(p, &status, WNOHANG | WUNTRACED);
+         int endID ;
+         waitpid(p, &status, WUNTRACED );
+         if (WIFEXITED(status)){
+              printf("The command %s is terminated \n", *cline);
+        }
+        else if (WIFSIGNALED(status))
+          printf("Child ended because of an uncaught signal.n \n");
+        else if (WIFSTOPPED(status))
+          printf("Child process has stopped.n \n");
+        else
+          printf("Child");
+        
+      
           //while (wait(&status) != p);
-          while(endID != p ){
-            printf("pid,p,endId: %d , %d , %d \n",pid,p,endID);
+          //while(waitpid(p, &status, WNOHANG | WUNTRACED) ){
+            //printf("pid,p,endId: %d , %d , %d \n",pid,p,endID);
           
           // while(endID ==0){
             //printf("Child still running");
-            endID = waitpid(p, &status, WNOHANG | WUNTRACED);
-            if (endID == -1)
-            { /* error calling waitpid       */
-              perror("waitpid error");
-              exit(EXIT_FAILURE);
-            }
-            else if (endID == p)
-            { /* child ended                 */
-              if (WIFEXITED(status)){
-                printf("The command %s is terminated \n", *cline);
+            //endID = waitpid(p, &status, WNOHANG | WUNTRACED);
+            // if (endID == -1)
+            // { /* error calling waitpid       */
+            //   perror("waitpid error");
+            //   exit(EXIT_FAILURE);
+            // }
+            // else if (endID == p)
+            // { /* child ended                 */
+            //   if (WIFEXITED(status)){
+            //     printf("The command %s is terminated \n", *cline);
 
-              }
-              else if (WIFSIGNALED(status))
-                printf("Child ended because of an uncaught signal.n \n");
-              else if (WIFSTOPPED(status))
-                printf("Child process has stopped.n \n");
-              else
-                printf("Child");
-              //removePid()
+            //   }
+            //   else if (WIFSIGNALED(status))
+            //     printf("Child ended because of an uncaught signal.n \n");
+            //   else if (WIFSTOPPED(status))
+            //     printf("Child process has stopped.n \n");
+            //   else
+            //     printf("Child");
+            //   //removePid()
 
-              fflush(stdout);
-              printf("before exit %d %d\n",pid,p);
-              exit(1);
-            }
-          }
-          
-          printf("out of while %d %d\n",pid,p);
+            //   fflush(stdout);
+            //   printf("before exit %d %d\n",pid,p);
+            //   exit(1);
+            // }
+          //}
           
         }
-        printf("out of while before exit %d %d\n",pid,p);
-        exit(1);
+        // printf("out of while before exit %d %d\n",pid,p);
+        // exit(1);
           //perror(*cline);
        
       }else{
@@ -257,61 +266,25 @@ void runcommand(char **cline,int where)	/* esegue un comando */
        
       }
     }else{
-      // signal(SIGINT, sig_handler); 
-      // ret = wait(&exitstat);
+      
       
       if (!where == BACKGROUND){
+        signal(SIGINT, sig_handler); 
+        ret = wait(&exitstat);
+
         printf("foreground my pid %d \n",pid);
+        waitpid(pid, &status, WUNTRACED);
 
-
-        int endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
-        printf("pid,endId: %d , %d \n",pid,endID);
-          //while (wait(&status) != p);
-          while(endID != pid ){
-           //endID = endID == -1 ? -1 : waitpid(pid, &status, WNOHANG | WUNTRACED);
-           endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
-          
-          // while(endID ==0){
-            //printf("Child still running");
-           
-            if (endID == -1)
-            { /* error calling waitpid       */
-              perror("waitpid error");
-              exit(EXIT_FAILURE);
-            }
-            else if (endID == pid)
-            { /* child ended                 */
-              if (WIFEXITED(0)){
-                printf("The command %s is terminated \n");
-
-              }
-              else if (WIFSIGNALED(status))
-                printf("Child ended because of an uncaught signal.n \n");
-              else if (WIFSTOPPED(status))
-                printf("Child process has stopped.n \n");
-              //removePid()
-
-              fflush(stdout);
-              //exit(1);
-            }
-          }
-          
-          
+        if (WIFEXITED(status)){
+              printf("The command %s is terminated \n", *cline);
+        }
+        else if (WIFSIGNALED(status))
+          printf("Child ended because of an uncaught signal.n \n");
+        else if (WIFSTOPPED(status))
+          printf("Child process has stopped.n \n");
+        else
+          printf("Child");
         
-        // struct sigaction signalAction;
-        // signalAction.sa_handler = sig_handler;
-        // sigemptyset(&signalAction.sa_mask);
-        // signalAction.sa_flags = 0; // SA_RESTART;
-        // sigaction(SIGINT, &signalAction, NULL);
-
-        //  if(signal(SIGINT, sig_handler)== SIGINT){
-        //     printf("my pid %d \n",pid);
-        //     //kill(pid,SIGINT);
-        //   }else{
-        //     printf("not  %d \n", signal(SIGINT, sig_handler));
-        //   }
-
-        //exit(1);
       }
         signal(SIGINT, SIG_DFL);
 
