@@ -13,6 +13,7 @@ char *convertIntToString(int n);
   struct sigaction sa;
   int exitstat, ret;
 
+// serve per gestire i segnali e prevenire il CTRL+C nel caso foreground
   void sig_handler(int signo)
   {
 
@@ -44,6 +45,8 @@ char *convertIntToString(int n);
     }
     return;
   }
+
+  //inserisco il pid dentro una variabile di ambiente
   void insertPid(int pid)
   {
     printf("insert pid %d", pid);
@@ -90,6 +93,7 @@ char *convertIntToString(int n);
     }
     return ret;
   }
+
   char *strremove(char *str, char *sub)
   {
     size_t len = strlen(sub);
@@ -194,76 +198,37 @@ void runcommand(char **cline,int where)	/* esegue un comando */
         }
 
         if (p == 0)
-        { /* processo figlio */
-          //setenv("BPID",convertIntToString(p),1);
-          //insertPid(p);
+        { /* processo figlio del processo figlio*/
 
-
-          // printf("background my pid %d  e p %d\n",pid,p);
-         if (execvp(*cline, cline) < 0) {     /* execute the command  */
-               printf("*** ERROR: exec failed\n");
-               exit(1);
+         if (execvp(*cline, cline) < 0) {     /* eseguo comando  */
+               printf("*** Esecuzione Fallita\n");
+               exit(1); // se vado in errore esco
           }
         }else{
          int endID ;
          waitpid(p, &status, WUNTRACED );
          if (WIFEXITED(status)){
-              printf("The command %s is terminated \n", *cline);
+              printf("Il comando ha terminato l'esecuzione \n", *cline);
         }
         else if (WIFSIGNALED(status))
-          printf("Child ended because of an uncaught signal.n \n");
+          printf("Il figlio e' stato interrotto da un segnale  \n");
         else if (WIFSTOPPED(status))
-          printf("Child process has stopped.n \n");
+          printf("il processo figlio e' stato interrotto \n");
         else
-          printf("Child");
+          printf("il processo figlio e' stato interrotto in un caso non gestito ");
         
       
-          //while (wait(&status) != p);
-          //while(waitpid(p, &status, WNOHANG | WUNTRACED) ){
-            //printf("pid,p,endId: %d , %d , %d \n",pid,p,endID);
-          
-          // while(endID ==0){
-            //printf("Child still running");
-            //endID = waitpid(p, &status, WNOHANG | WUNTRACED);
-            // if (endID == -1)
-            // { /* error calling waitpid       */
-            //   perror("waitpid error");
-            //   exit(EXIT_FAILURE);
-            // }
-            // else if (endID == p)
-            // { /* child ended                 */
-            //   if (WIFEXITED(status)){
-            //     printf("The command %s is terminated \n", *cline);
-
-            //   }
-            //   else if (WIFSIGNALED(status))
-            //     printf("Child ended because of an uncaught signal.n \n");
-            //   else if (WIFSTOPPED(status))
-            //     printf("Child process has stopped.n \n");
-            //   else
-            //     printf("Child");
-            //   //removePid()
-
-            //   fflush(stdout);
-            //   printf("before exit %d %d\n",pid,p);
-            //   exit(1);
-            // }
-          //}
+         
           
         }
-        // printf("out of while before exit %d %d\n",pid,p);
-        // exit(1);
-          //perror(*cline);
        
       }else{
        
         if (execvp(*cline, cline) < 0) {     /* execute the command  */
-               printf("*** ERROR: exec failed\n");
+               printf("*** Esecuzione fallita\n");
                exit(1);
         }
 
-        
-       
       }
     }else{
       
@@ -272,18 +237,18 @@ void runcommand(char **cline,int where)	/* esegue un comando */
         signal(SIGINT, sig_handler); 
         ret = wait(&exitstat);
 
-        printf("foreground my pid %d \n",pid);
+        //printf("foreground my pid %d \n",pid);
         waitpid(pid, &status, WUNTRACED);
 
         if (WIFEXITED(status)){
-              printf("The command %s is terminated \n", *cline);
+              printf("Il comando %s e' terminato \n", *cline);
         }
         else if (WIFSIGNALED(status))
-          printf("Child ended because of an uncaught signal.n \n");
+          printf("Il figlio e' stato interrotto da un segnale \n");
         else if (WIFSTOPPED(status))
-          printf("Child process has stopped.n \n");
+          printf("il processo figlio e' stato interrotto \n");
         else
-          printf("Child");
+          printf("Il processo figlio e' stato interrotto in un caso non gestito");
         
       }
         signal(SIGINT, SIG_DFL);
