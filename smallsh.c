@@ -27,72 +27,72 @@ char *convertIntToString(int n);
       //return EXIT_FAILURE;
     }
   }
-  void removePid(int pid)
-  {
-    //controllo che la variabile contenga pid+,
-    char *str = convertIntToString(pid);
-    char *strWithComma = convertIntToString(pid);
-    strcat(strWithComma, ",");
-    if (strstr(getenv("BPID"), strWithComma) != NULL)
-    {
-      char *strRemoved = strremove(getenv("BPID"), strWithComma);
-      setenv("BPID", strRemoved, 1);
-    }
-    //controllo che la variabile contenga pid (ultimo elemento o primo senza ulteriori)
-    if (strstr(getenv("BPID"), str) != NULL)
-    {
-      setenv("BPID", strremove(getenv("BPID"), str), 1);
-    }
-    return;
-  }
+  // void removePid(int pid)
+  // {
+  //   //controllo che la variabile contenga pid+,
+  //   char *str = convertIntToString(pid);
+  //   char *strWithComma = convertIntToString(pid);
+  //   strcat(strWithComma, ",");
+  //   if (strstr(getenv("BPID"), strWithComma) != NULL)
+  //   {
+  //     char *strRemoved = strremove(getenv("BPID"), strWithComma);
+  //     setenv("BPID", strRemoved, 1);
+  //   }
+  //   //controllo che la variabile contenga pid (ultimo elemento o primo senza ulteriori)
+  //   if (strstr(getenv("BPID"), str) != NULL)
+  //   {
+  //     setenv("BPID", strremove(getenv("BPID"), str), 1);
+  //   }
+  //   return;
+  // }
 
   //inserisco il pid dentro una variabile di ambiente
-  void insertPid(int pid)
-  {
-    printf("insert pid %d", pid);
-    int size = 100;
-    char *env = getenv("BPID");
-    if (env != NULL)
-    {
-      if (strlen(env) > 0)
-      {
-        size = strlen(getenv("BPID"));
-      }
-    }
-    printf("size is %d", size);
-    char myenv[size];
-    if (getenv("BPID") == NULL)
-    {
-      myenv[size] = "";
-    }
-    else
-    {
-      myenv[size] = getenv("BPID");
-    }
+  // void insertPid(int pid)
+  // {
+  //   printf("insert pid %d", pid);
+  //   int size = 100;
+  //   char *env = getenv("BPID");
+  //   if (env != NULL)
+  //   {
+  //     if (strlen(env) > 0)
+  //     {
+  //       size = strlen(getenv("BPID"));
+  //     }
+  //   }
+  //   printf("size is %d", size);
+  //   char myenv[size];
+  //   if (getenv("BPID") == NULL)
+  //   {
+  //     myenv[size] = "";
+  //   }
+  //   else
+  //   {
+  //     myenv[size] = getenv("BPID");
+  //   }
 
-    if (getNumberOfComma(myenv) > 0 || strlen(getenv("BPID")) > 0)
-    {
-      myenv[size] = strcat(myenv, ",");
-      myenv[size] = strcat(myenv, convertIntToString(pid));
-      setenv("BPID", myenv, 1);
-    }
-    else
-    {
-      myenv[size] = strcat(myenv, convertIntToString(pid));
-      setenv("BPID", myenv, 1);
-    }
-  }
+  //   if (getNumberOfComma(myenv) > 0 || strlen(getenv("BPID")) > 0)
+  //   {
+  //     myenv[size] = strcat(myenv, ",");
+  //     myenv[size] = strcat(myenv, convertIntToString(pid));
+  //     setenv("BPID", myenv, 1);
+  //   }
+  //   else
+  //   {
+  //     myenv[size] = strcat(myenv, convertIntToString(pid));
+  //     setenv("BPID", myenv, 1);
+  //   }
+  // }
 
-  int getNumberOfComma(char str[])
-  {
-    int ret = 0;
-    for (int i = 0; i < strlen(str); i++)
-    {
-      if (str[i] == ',')
-        ret++;
-    }
-    return ret;
-  }
+  // int getNumberOfComma(char str[])
+  // {
+  //   int ret = 0;
+  //   for (int i = 0; i < strlen(str); i++)
+  //   {
+  //     if (str[i] == ',')
+  //       ret++;
+  //   }
+  //   return ret;
+  // }
 
   char *strremove(char *str, char *sub)
   {
@@ -108,12 +108,12 @@ char *convertIntToString(int n);
     return str;
   }
 
-  char *convertIntToString(int n)
-  {
-    char str[12];
-    sprintf(str, "%d", n);
-    return &str;
-  }
+  // char *convertIntToString(int n)
+  // {
+  //   char str[12];
+  //   sprintf(str, "%d", n);
+  //   return &str;
+  // }
 
   int procline(void) /* tratta una riga di input */
   {
@@ -137,9 +137,10 @@ char *convertIntToString(int n);
       /* se argomento: passa al prossimo simbolo */
       case ARG:
 		
-        if (narg < MAXARG)
+        if (narg < MAXARG){
 	        narg++;
-	        break;
+        }
+        break;
 
       /* se fine riga o ';' o '&' esegue il comando ora contenuto in arg,
 	 mettendo NULL per segnalare la fine degli argomenti: serve a execvp */
@@ -186,7 +187,6 @@ void runcommand(char **cline,int where)	/* esegue un comando */
       if (where == BACKGROUND)
       {
         pid_t p;
-        int exitstat, ret;
 
         fflush(stdout);
 
@@ -205,10 +205,9 @@ void runcommand(char **cline,int where)	/* esegue un comando */
                exit(1); // se vado in errore esco
           }
         }else{
-         int endID ;
          waitpid(p, &status, WUNTRACED );
          if (WIFEXITED(status)){
-              printf("Il comando ha terminato l'esecuzione \n", *cline);
+              printf("Il comando %s ha terminato l'esecuzione \n", *cline);
         }
         else if (WIFSIGNALED(status))
           printf("Il figlio e' stato interrotto da un segnale  \n");
@@ -233,7 +232,8 @@ void runcommand(char **cline,int where)	/* esegue un comando */
     }else{
       
       
-      if (!where == BACKGROUND){
+      if ((!where) == BACKGROUND){
+        int exitstat;
         signal(SIGINT, sig_handler); 
         ret = wait(&exitstat);
 
@@ -271,7 +271,7 @@ char* getUserNameAndWorkingDir()
   strcat(stringToRet, ":");
   strcat(stringToRet, getenv("HOME"));
   strcat(stringToRet, ":");
-  pStringtoRet = &stringToRet;
+  pStringtoRet = stringToRet;
   return pStringtoRet;
 }
 
